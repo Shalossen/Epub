@@ -1,6 +1,44 @@
-# Epub
-I would like a mobile app epub reader. You should be able to upload your own books (epub files), read them and be able to change many settings such as the font, font size, background color, pagination mode or scroll mode, type of paragraphs (justify..). There should also be a panel where you can choose chapters or important things in the book (depending of what the epub provides).
-Also add a dictionary where when you select a word you have its definition
-Next, I would like to add an AI menu. Inside there will be many analyses made by an AI (can provide the api). For example the ai should be able to scan books in backend (you can think how to make it efficient). After that in this menu you have analyses about characters, about complexity of words, about themes,...( you can add things that you find yourself important )
+# Japscan Scraper
 
-You can add details that I didnt to
+A robust CLI scraper for japscan.si (and mirrors) to fetch series, chapters, images, and support bulk downloads.
+
+## Install
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## CLI
+
+```bash
+python -m japscan_scraper --help
+```
+
+Examples:
+
+- List series (catalog):
+  ```bash
+  python -m japscan_scraper catalog --limit 50 --json catalog.json
+  ```
+- Get series info and chapters:
+  ```bash
+  python -m japscan_scraper series "one-piece" --json one-piece.json
+  ```
+- List chapter pages (image URLs):
+  ```bash
+  python -m japscan_scraper chapter "one-piece" 846 --json one-piece-846.json
+  ```
+- Download a chapter:
+  ```bash
+  python -m japscan_scraper download "one-piece" 846 --out ./downloads/one-piece
+  ```
+- Bulk download entire series:
+  ```bash
+  python -m japscan_scraper bulk "one-piece" --out ./downloads/one-piece --workers 8
+  ```
+
+## Notes
+- Respects basic rate limiting and retries. Configure with env vars or CLI flags.
+- Supports multiple mirrors and attempts automatic domain failover.
+- If the site changes markup, adjust selectors in `japscan_scraper/parser.py`.
