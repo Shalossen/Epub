@@ -1,0 +1,20 @@
+base_url: "https://japscan.si"
+series_index:
+  # Starting index pages. Add all index pages or first page; next_page_selector is used to paginate.
+  start_urls:
+    - "https://japscan.si/mangas/"
+  # CSS selectors for each series card and the link within it
+  series_card_selector: ""
+  series_link_selector: ""
+  # CSS selector for the next-page link; leave empty if there is no pagination
+  next_page_selector: ""
+series_page:
+  # Container that holds chapter links; if empty, the whole page is searched
+  chapters_container_selector: ""
+  # CSS selector to capture chapter links inside the container
+  chapter_link_selector: ""
+chapter_page:
+  # CSS selector to capture page images; these will be enumerated in order
+  image_selector: ""
+  # Attribute that contains the image URL (usually "src")
+  image_attr: "src"
