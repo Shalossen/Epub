@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 
 import requests
 import cloudscraper
@@ -81,6 +81,17 @@ class HttpClient:
                 self.session.cookies.update(jar)  # type: ignore[attr-defined]
             except Exception:
                 pass
+
+    def update_cookies(self, cookies: Dict[str, str]) -> None:
+        jar = requests.cookies.RequestsCookieJar()
+        domain = self.base_url.split("//", 1)[-1]
+        for name, value in cookies.items():
+            if name and value is not None:
+                jar.set(name, value, domain=domain)
+        try:
+            self.session.cookies.update(jar)  # type: ignore[attr-defined]
+        except Exception:
+            pass
 
     def _delay(self):
         if self.rate_limit_delay_s > 0:

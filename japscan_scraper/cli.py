@@ -15,6 +15,7 @@ from .client import HttpClient
 from .parser import parse_catalog, parse_series, HREF_SERIES_RE
 from .models import SeriesWithChapters
 from .downloader import fetch_chapter_pages, download_chapter, sanitize_filename
+from .browser import fetch_page_sync
 
 console = Console()
 
@@ -50,12 +51,31 @@ def extract_series_slug_from_url(url: str) -> Optional[str]:
 @click.option("--base-url", envvar="JAPSCAN_BASE_URL", default=None, help="Base URL, e.g. https://www.japscan.si")
 @click.option("--rate", envvar="JAPSCAN_RATELIMIT_DELAY", default=RATE_LIMIT_DELAY_S, type=float, help="Rate-limit delay seconds")
 @click.option("--engine", envvar="JAPSCAN_HTTP_ENGINE", default="auto", type=click.Choice(["auto","cloudscraper","curl","requests"]), help="HTTP engine")
+@click.option("--browser", is_flag=True, help="Use headless browser to fetch protected pages (Playwright)")
 @click.pass_context
-def main(ctx: click.Context, base_url: Optional[str], rate: float, engine: str):
+def main(ctx: click.Context, base_url: Optional[str], rate: float, engine: str, browser: bool):
     base = resolve_base_url(base_url)
     ctx.ensure_object(dict)
     ctx.obj["client"] = HttpClient(base_url=base, rate_limit_delay_s=rate, engine=engine)
     ctx.obj["base"] = base
+    ctx.obj["use_browser"] = browser
+
+
+@main.command()
+@click.argument("url")
+@click.option("--out", "out_path", type=click.Path(dir_okay=False), help="Write HTML to file (optional)")
+@click.pass_context
+def browser_html(ctx: click.Context, url: str, out_path: Optional[str]):
+    _, html, cookies = fetch_page_sync(url)
+    # warm cookies into the client
+    client: HttpClient = ctx.obj["client"]
+    client.update_cookies(cookies)
+    if out_path:
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(html)
+        console.print(f"Wrote HTML -> {out_path}")
+    else:
+        console.print(html[:5000])
 
 
 @main.command()
@@ -103,15 +123,26 @@ def catalog(ctx: click.Context, limit: int, json_out: Optional[str]):
 def series(ctx: click.Context, series_or_url: str, json_out: Optional[str]):
     client: HttpClient = ctx.obj["client"]
     base: str = ctx.obj["base"]
+    use_browser: bool = ctx.obj.get("use_browser", False)
 
     last_exc: Optional[Exception] = None
     swc: Optional[SeriesWithChapters] = None
+
+    def fetch_with_browser_then_client(url: str) -> str:
+        # Use browser to get HTML and cookies, then inject cookies into client and re-fetch via HTTP
+        _, html, cookies = fetch_page_sync(url)
+        client.update_cookies(cookies)
+        _, html2 = client.get(url)
+        return html2 or html
 
     if series_or_url.startswith("http://") or series_or_url.startswith("https://"):
         url = series_or_url
         slug = extract_series_slug_from_url(url) or sanitize_filename(urlparse(url).path.rsplit("/", 1)[-1])
         try:
-            _, html = client.get(url)
+            if use_browser:
+                html = fetch_with_browser_then_client(url)
+            else:
+                _, html = client.get(url)
             swc = parse_series(html, base, slug)
         except Exception as exc:
             last_exc = exc
@@ -119,7 +150,11 @@ def series(ctx: click.Context, series_or_url: str, json_out: Optional[str]):
         series_slug = series_or_url
         for prefix in ["/manga/", "/serie/"]:
             try:
-                _, html = client.get(f"{prefix}{series_slug}")
+                url = f"{base}{prefix}{series_slug}"
+                if use_browser:
+                    html = fetch_with_browser_then_client(url)
+                else:
+                    _, html = client.get(f"{prefix}{series_slug}")
                 swc = parse_series(html, base, series_slug)
                 if swc and swc.chapters:
                     break
