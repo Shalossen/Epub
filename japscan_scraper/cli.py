@@ -49,11 +49,12 @@ def extract_series_slug_from_url(url: str) -> Optional[str]:
 @click.group()
 @click.option("--base-url", envvar="JAPSCAN_BASE_URL", default=None, help="Base URL, e.g. https://www.japscan.si")
 @click.option("--rate", envvar="JAPSCAN_RATELIMIT_DELAY", default=RATE_LIMIT_DELAY_S, type=float, help="Rate-limit delay seconds")
+@click.option("--engine", envvar="JAPSCAN_HTTP_ENGINE", default="auto", type=click.Choice(["auto","cloudscraper","curl","requests"]), help="HTTP engine")
 @click.pass_context
-def main(ctx: click.Context, base_url: Optional[str], rate: float):
+def main(ctx: click.Context, base_url: Optional[str], rate: float, engine: str):
     base = resolve_base_url(base_url)
     ctx.ensure_object(dict)
-    ctx.obj["client"] = HttpClient(base_url=base, rate_limit_delay_s=rate)
+    ctx.obj["client"] = HttpClient(base_url=base, rate_limit_delay_s=rate, engine=engine)
     ctx.obj["base"] = base
 
 
@@ -163,7 +164,6 @@ def debug_html(ctx: click.Context, url: str, out_path: Optional[str]):
             f.write(html)
         console.print(f"Wrote HTML -> {out_path}")
     else:
-        # Print first 5000 chars
         console.print(html[:5000])
 
 
