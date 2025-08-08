@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Japscan.si Scraper (Compliant)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
+    h1 { margin-bottom: 0.25rem; }
+    small { color: #666; }
+    form { margin-bottom: 1rem; }
+    input[type=text] { width: 520px; padding: 0.5rem; }
+    button { padding: 0.5rem 0.75rem; }
+    table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+    th, td { text-align: left; border-bottom: 1px solid #eee; padding: 0.5rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Japscan.si Scraper (Compliant)</h1>
+  <small>Respects robots.txt and rate limits. For site owners, prefer first-party export endpoints or allowlists.</small>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Queue Tasks</h2>
+      <form method="post" action="/scrape/series-index">
+        <button type="submit">Index All Series</button>
+      </form>
+      <form method="post" action="/scrape/series">
+        <input type="text" name="series_url" placeholder="Series URL (e.g., https://japscan.si/mangas/... )" required />
+        <button type="submit">Fetch Chapters</button>
+      </form>
+      <form method="post" action="/scrape/chapter">
+        <input type="text" name="chapter_url" placeholder="Chapter URL (e.g., https://japscan.si/lecture-en-ligne/... )" required />
+        <button type="submit">Fetch Images</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Recent Series</h2>
+      <table>
+        <thead><tr><th>Title</th><th>URL</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for s in series %}
+          <tr><td>{{ s.title }}</td><td><a href="{{ s.url }}" target="_blank">link</a></td><td>{{ s.created_at }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top: 2rem;">
+    <div class="card">
+      <h2>Recent Chapters</h2>
+      <table>
+        <thead><tr><th>Series ID</th><th>Title</th><th>Number</th><th>URL</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for c in chapters %}
+          <tr><td>{{ c.series_id }}</td><td>{{ c.title }}</td><td>{{ c.number }}</td><td><a href="{{ c.url }}" target="_blank">link</a></td><td>{{ c.created_at }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Recent Pages</h2>
+      <table>
+        <thead><tr><th>Chapter ID</th><th>Index</th><th>URL</th><th>Local</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for p in pages %}
+          <tr><td>{{ p.chapter_id }}</td><td>{{ p.index }}</td><td><a href="{{ p.url }}" target="_blank">img</a></td><td>{{ p.local_path }}</td><td>{{ p.created_at }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
