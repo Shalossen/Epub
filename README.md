@@ -1,6 +1,22 @@
-# Epub
-I would like a mobile app epub reader. You should be able to upload your own books (epub files), read them and be able to change many settings such as the font, font size, background color, pagination mode or scroll mode, type of paragraphs (justify..). There should also be a panel where you can choose chapters or important things in the book (depending of what the epub provides).
-Also add a dictionary where when you select a word you have its definition
-Next, I would like to add an AI menu. Inside there will be many analyses made by an AI (can provide the api). For example the ai should be able to scan books in backend (you can think how to make it efficient). After that in this menu you have analyses about characters, about complexity of words, about themes,...( you can add things that you find yourself important )
+# Japscan Scraper
 
-You can add details that I didnt to
+Features:
+- Detect missing chapters per series vs local DB
+- Manual selection of series/chapters to download
+- Headless browser (Playwright) with Cloudflare challenge handling
+- Saves images to downloads/ and tracks state in SQLite
+
+Quick start:
+1. python3 -m venv .venv && source .venv/bin/activate
+2. pip install -r requirements.txt
+3. python -m playwright install --with-deps
+4. python -m scraper.cli catalog  # list series
+5. python -m scraper.cli missing --series "Solo Leveling"  # show missing
+6. python -m scraper.cli download --series "Solo Leveling" --from 21 --to latest
+
+Environment:
+- JAPSCAN_BASE_URL (default: https://www.japscan.si)
+
+Storage:
+- SQLite at .data/japscan.db
+- Images at downloads/<series>/<chapter>/<page>.jpg
